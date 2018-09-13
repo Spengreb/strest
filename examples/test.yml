@@ -1,0 +1,7 @@
+version: 1
+
+requests:
+  Get SWAPI People:
+    url: https://swapi.co/api/people
+    method: GET
+    repeat: 10

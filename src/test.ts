@@ -40,50 +40,54 @@ export const performTests = async (testObjects: object[], printAll: boolean) =>�
         if(!abortBecauseTestFailed) {
           
           const val = requests[requestName];
-  
-          const spinner = ora(`Testing ${chalk.bold(colorizeMain(requestName))}`).start();
-          const startTime = new Date().getTime();
-          
-          let error = await performRequest(val, requestName, printAll);
-          
-          const endTime = new Date().getTime();
-          const execTime = (endTime - startTime) / 1000;
-  
-          if(error.isError === true) {
-            spinner.clear();
-            console.log();
-            spinner.fail(colorizeCustomRed(`Testing ${chalk.bold(colorizeCustomRed(requestName))} failed (${chalk.bold(`${execTime.toString()}s`)}) \n\n${error.message}`))
-            // if one test failed, don't run others
-            abortBecauseTestFailed = true;
-            return error.code;
-          } else {
-            if(error.message !== null) {
-              // log the response info and data
-              const res: AxiosResponse<any> = error.message;
-              let parsedData = res.data;
-              if(typeof res.data === 'object') {
-                parsedData = JSON.stringify(res.data, null, 2);
-              }
+          if (val.repeat == undefined){
+            val.repeat = 1;
+          }
+          for (var iter = 1; iter <= val.repeat; iter++) {
 
-              let dataString = '';
-              if(parsedData != '') {
-                dataString = `\n\n${colorizeMain('Data')}: \n\n${chalk.hex(config.secondaryColor)(parsedData)}\n`;
-              } else {
-                dataString = `\n\n${colorizeMain('Data')}: No data received\n`;
-              }
+            const spinner = ora(`Testing ${chalk.bold(colorizeMain(requestName))} #${iter.toString()}`).start();
+            const startTime = new Date().getTime();
+            
+            let error = await performRequest(val, requestName, printAll);
+            
+            const endTime = new Date().getTime();
+            const execTime = (endTime - startTime) / 1000;
+    
+            if(error.isError === true) {
+              spinner.clear();
+              console.log();
+              spinner.fail(colorizeCustomRed(`Testing ${chalk.bold(colorizeCustomRed(requestName))} #${iter.toString()} failed (${chalk.bold(`${execTime.toString()}s`)}) \n\n${error.message}`))
+              // if one test failed, don't run others
+              abortBecauseTestFailed = true;
+              return error.code;
+            } else {
+              if(error.message !== null) {
+                // log the response info and data
+                const res: AxiosResponse<any> = error.message;
+                let parsedData = res.data;
+                if(typeof res.data === 'object') {
+                  parsedData = JSON.stringify(res.data, null, 2);
+                }
 
-              spinner.succeed(
-                `Testing ${chalk.bold(colorizeMain(requestName))} succeeded (${chalk.bold(`${execTime.toString()}s`)})` +
-                `\n\n${colorizeMain('Status')}: ${res.status}`+
-                `\n${colorizeMain('Status Text')}: ${res.statusText}` +
-                `\n\n${colorizeMain('Headers')}: \n\n${chalk.hex(config.secondaryColor)(JSON.stringify(res.headers, null ,2))}` +
-                `${dataString}`
-              )
-            } else {
-              spinner.succeed(`Testing ${chalk.bold(colorizeMain(requestName))} succeeded (${chalk.bold(`${execTime.toString()}s`)})`)
+                let dataString = '';
+                if(parsedData != '') {
+                  dataString = `\n\n${colorizeMain('Data')}: \n\n${chalk.hex(config.secondaryColor)(parsedData)}\n`;
+                } else {
+                  dataString = `\n\n${colorizeMain('Data')}: No data received\n`;
+                }
+
+                spinner.succeed(
+                  `Testing ${chalk.bold(colorizeMain(requestName))} #${iter.toString()} succeeded (${chalk.bold(`${execTime.toString()}s`)})` +
+                  `\n\n${colorizeMain('Status')}: ${res.status}`+
+                  `\n${colorizeMain('Status Text')}: ${res.statusText}` +
+                  `\n\n${colorizeMain('Headers')}: \n\n${chalk.hex(config.secondaryColor)(JSON.stringify(res.headers, null ,2))}` +
+                  `${dataString}`
+                )
+              } else {
+                spinner.succeed(`Testing ${chalk.bold(colorizeMain(requestName))} #${iter.toString()} succeeded (${chalk.bold(`${execTime.toString()}s`)})`)
+              }
             }
           }
-    
         }
     
       }
